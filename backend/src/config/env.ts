@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import path from 'path';
 
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const envSchema = z.object({
   // Database
