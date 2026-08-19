@@ -16,10 +16,10 @@ const statusColors: Record<string, string> = {
   INTERVIEW_SCHEDULED: 'bg-purple-100 text-purple-700',
   SELECTED: 'bg-emerald-100 text-emerald-700',
   REJECTED: 'bg-red-100 text-red-700',
-  JOINED: 'bg-teal-100 text-teal-700',
+  ACCEPTED: 'bg-teal-100 text-teal-700',
 };
 
-const allStatuses: CandidateStatus[] = ['APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'REJECTED', 'JOINED'];
+const allStatuses: CandidateStatus[] = ['APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'REJECTED', 'ACCEPTED'];
 
 export default function CandidatesPage() {
   return (
@@ -336,3 +336,5 @@ function CandidatesContent() {
     </div>
   );
 }
+
+// HMR trigger

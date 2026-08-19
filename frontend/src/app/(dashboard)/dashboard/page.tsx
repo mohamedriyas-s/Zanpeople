@@ -25,7 +25,7 @@ const statusColors: Record<string, string> = {
   INTERVIEW_SCHEDULED: 'bg-purple-100 text-purple-700',
   SELECTED: 'bg-emerald-100 text-emerald-700',
   REJECTED: 'bg-red-100 text-red-700',
-  JOINED: 'bg-teal-100 text-teal-700',
+  ACCEPTED: 'bg-teal-100 text-teal-700',
 };
 
 export default function DashboardPage() {
@@ -64,7 +64,7 @@ export default function DashboardPage() {
     { label: 'Interviews', value: stats.interviewScheduled, icon: Calendar, color: 'from-purple-500 to-purple-600', bgLight: 'bg-purple-50', textColor: 'text-purple-600', href: '/candidates?status=INTERVIEW_SCHEDULED' },
     { label: 'Selected', value: stats.selected, icon: CheckCircle2, color: 'from-teal-500 to-teal-600', bgLight: 'bg-teal-50', textColor: 'text-teal-600', href: '/candidates?status=SELECTED' },
     { label: 'Rejected', value: stats.rejected, icon: XCircle, color: 'from-red-500 to-red-600', bgLight: 'bg-red-50', textColor: 'text-red-600', href: '/candidates?status=REJECTED' },
-    { label: 'Joined', value: stats.joined, icon: ArrowRight, color: 'from-cyan-500 to-cyan-600', bgLight: 'bg-cyan-50', textColor: 'text-cyan-600', href: '/candidates?status=JOINED' },
+    { label: 'Accepted', value: stats.joined, icon: ArrowRight, color: 'from-cyan-500 to-cyan-600', bgLight: 'bg-cyan-50', textColor: 'text-cyan-600', href: '/candidates?status=ACCEPTED' },
     { label: 'Active Employees', value: stats.totalEmployees, icon: Briefcase, color: 'from-indigo-500 to-indigo-600', bgLight: 'bg-indigo-50', textColor: 'text-indigo-600', href: '/employees' },
   ] : [];
 

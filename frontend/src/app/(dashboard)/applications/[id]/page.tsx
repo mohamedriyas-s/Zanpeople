@@ -86,6 +86,18 @@ export default function ApplicationPipelinePage() {
     } finally { setActionLoading(false); }
   };
 
+  const handleMarkAccepted = async () => {
+    if (!app?.candidateId) return;
+    try {
+      setActionLoading(true);
+      await api.patch(`/candidates/${app.candidateId}/status`, { status: 'ACCEPTED' });
+      toast.success('Candidate marked as Accepted');
+      fetchApplication();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error?.message || 'Failed to mark as accepted');
+    } finally { setActionLoading(false); }
+  };
+
   const handleAssignTask = async () => {
     if (!taskTitle.trim()) { toast.error('Task title is required'); return; }
     const sp = getCurrentStageProgress();
@@ -463,8 +475,22 @@ export default function ApplicationPipelinePage() {
             </div>
             <h3 className="text-xl font-bold text-[hsl(var(--foreground))]">Candidate Selected!</h3>
             <p className="text-[hsl(var(--muted-foreground))] mt-2 text-sm">This candidate has successfully completed the entire pipeline.</p>
-            <Link href={`/employees/convert?candidateId=${app.candidateId}`}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[hsl(var(--primary))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-smooth shadow-md shadow-[hsl(var(--primary)/0.2)] mt-4">Convert to Employee</Link>
+            
+            {app.candidate?.employee ? (
+              <Link href={`/employees/${app.candidate.employee.id}`}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-smooth shadow-md shadow-[hsl(var(--primary)/0.2)] mt-4">
+                <Briefcase className="w-4 h-4" /> View Employee Profile
+              </Link>
+            ) : app.candidate?.status === 'ACCEPTED' ? (
+              <Link href={`/employees/convert?candidateId=${app.candidateId}`}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[hsl(var(--primary))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-smooth shadow-md shadow-[hsl(var(--primary)/0.2)] mt-4">Convert to Employee</Link>
+            ) : (
+              <button onClick={handleMarkAccepted} disabled={actionLoading}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[hsl(var(--primary))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-smooth shadow-md shadow-[hsl(var(--primary)/0.2)] mt-4">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Mark as Accepted
+              </button>
+            )}
           </>
         ) : (
           <>

@@ -28,7 +28,6 @@ const candidateSchema = z.object({
   githubUrl: z.string().url().optional().or(z.literal('')),
   portfolioUrl: z.string().url().optional().or(z.literal('')),
   personalWebsiteUrl: z.string().url().optional().or(z.literal('')),
-  interviewDate: z.string().optional(),
 });
 
 type CandidateForm = z.infer<typeof candidateSchema>;
@@ -41,6 +40,7 @@ export default function AddCandidatePage() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState('');
+  const [isFresher, setIsFresher] = useState(false);
 
   // Job assignment
   const [jobs, setJobs] = useState<JobOpening[]>([]);
@@ -171,8 +171,10 @@ export default function AddCandidatePage() {
     try {
       const payload = {
         ...data,
-        yearsExperience: data.yearsExperience ? parseFloat(data.yearsExperience) : null,
-        currentSalary: data.currentSalary ? parseFloat(data.currentSalary) : null,
+        yearsExperience: isFresher ? 0 : (data.yearsExperience ? parseFloat(data.yearsExperience) : null),
+        currentCompany: isFresher ? null : data.currentCompany,
+        noticePeriod: isFresher ? null : data.noticePeriod,
+        currentSalary: isFresher ? null : (data.currentSalary ? parseFloat(data.currentSalary) : null),
         expectedSalary: data.expectedSalary ? parseFloat(data.expectedSalary) : null,
         skills,
       };
@@ -203,7 +205,7 @@ export default function AddCandidatePage() {
       if (err.response?.data?.error?.code === 'DUPLICATE_CANDIDATE') {
         setDuplicateWarning(err.response.data.error.message);
       } else {
-        alert(err.response?.data?.error?.message || 'Failed to create candidate');
+        toast.error(err.response?.data?.error?.message || 'Failed to create candidate');
       }
       setIsSubmitting(false);
     }
@@ -434,36 +436,42 @@ export default function AddCandidatePage() {
 
         {/* Professional Information */}
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-4">Professional Details</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Professional Details</h3>
+            <label className="flex items-center gap-2 text-sm text-[hsl(var(--foreground))] cursor-pointer select-none">
+              <input type="checkbox" checked={isFresher} onChange={e => setIsFresher(e.target.checked)} className="w-4 h-4 rounded border-[hsl(var(--input))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]" />
+              <span>Fresher Candidate</span>
+            </label>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className={labelClass}>Position Applied *</label>
-              <input {...register('positionApplied')} className={inputClass} placeholder="Senior Software Engineer" />
+              <input {...register('positionApplied')} className={inputClass} placeholder={isFresher ? "Junior Software Engineer" : "Senior Software Engineer"} />
               {errors.positionApplied && <p className={errorClass}>{errors.positionApplied.message}</p>}
             </div>
-            <div>
-              <label className={labelClass}>Years of Experience</label>
-              <input {...register('yearsExperience')} type="number" step="0.5" min="0" className={inputClass} placeholder="5" />
-            </div>
-            <div>
-              <label className={labelClass}>Current Company</label>
-              <input {...register('currentCompany')} className={inputClass} placeholder="TechCorp" />
-            </div>
-            <div>
-              <label className={labelClass}>Notice Period</label>
-              <input {...register('noticePeriod')} className={inputClass} placeholder="30 days" />
-            </div>
-            <div>
-              <label className={labelClass}>Interview Date</label>
-              <input {...register('interviewDate')} type="date" className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>Current Salary (₹)</label>
-              <input {...register('currentSalary')} type="number" min="0" className={inputClass} placeholder="1200000" />
-            </div>
+            {!isFresher && (
+              <>
+                <div>
+                  <label className={labelClass}>Years of Experience</label>
+                  <input {...register('yearsExperience')} type="number" step="0.5" min="0" className={inputClass} placeholder="5" />
+                </div>
+                <div>
+                  <label className={labelClass}>Current Company</label>
+                  <input {...register('currentCompany')} className={inputClass} placeholder="TechCorp" />
+                </div>
+                <div>
+                  <label className={labelClass}>Notice Period</label>
+                  <input {...register('noticePeriod')} className={inputClass} placeholder="30 days" />
+                </div>
+                <div>
+                  <label className={labelClass}>Current Salary (₹)</label>
+                  <input {...register('currentSalary')} type="number" min="0" className={inputClass} placeholder="1200000" />
+                </div>
+              </>
+            )}
             <div>
               <label className={labelClass}>Expected Salary (₹)</label>
-              <input {...register('expectedSalary')} type="number" min="0" className={inputClass} placeholder="1600000" />
+              <input {...register('expectedSalary')} type="number" min="0" className={inputClass} placeholder={isFresher ? "300000" : "1600000"} />
             </div>
           </div>
         </div>

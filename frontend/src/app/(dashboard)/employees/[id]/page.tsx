@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit, UserMinus, Mail, Phone, Calendar, MapPin, Building2, Briefcase, Users, FileText, Download, AlertTriangle, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import type { Employee } from '@/types';
+import toast from 'react-hot-toast';
 
 export default function EmployeeDetailPage() {
   const params = useParams();
@@ -31,6 +32,7 @@ export default function EmployeeDetailPage() {
     try {
       const url = confirm ? `/employees/${employee.id}/deactivate?confirm=true` : `/employees/${employee.id}/deactivate`;
       await api.patch(url);
+      toast.success('Employee deactivated successfully');
       await fetchEmployee();
       setShowDeactivate(false);
       setHasReportsWarning('');
@@ -38,7 +40,7 @@ export default function EmployeeDetailPage() {
       if (err.response?.data?.error?.code === 'HAS_ACTIVE_REPORTS') {
         setHasReportsWarning(err.response.data.error.message);
       } else {
-        alert(err.response?.data?.error?.message || 'Failed to deactivate');
+        toast.error(err.response?.data?.error?.message || 'Failed to deactivate');
       }
     }
     setDeactivating(false);

@@ -210,3 +210,5 @@ export default function JobOpeningsPage() {
     </div>
   );
 }
+
+// HMR trigger

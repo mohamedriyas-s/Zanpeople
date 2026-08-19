@@ -140,7 +140,7 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
       await api.post(`/settings/${type}`, { name: newName.trim() });
       setNewName('');
       fetchItems();
-    } catch (err: any) { alert(err.response?.data?.error?.message || 'Failed'); }
+    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
     setAdding(false);
   };
 
@@ -149,14 +149,16 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
       await api.put(`/settings/${type}/${id}`, { name: editName });
       setEditingId(null);
       fetchItems();
-    } catch (err: any) { alert(err.response?.data?.error?.message || 'Failed'); }
+    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
   };
 
   const toggleItem = async (id: string) => {
     try {
       await api.delete(`/settings/${type}/${id}`);
       fetchItems();
-    } catch {}
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to toggle item');
+    }
   };
 
   return (
@@ -214,7 +216,8 @@ function UsersTab() {
       setForm({ name: '', email: '', password: '', role: 'HR' });
       const res = await api.get('/settings/users');
       setUsers(res.data.data);
-    } catch (err: any) { alert(err.response?.data?.error?.message || 'Failed'); }
+      toast.success('User created successfully');
+    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
     setAdding(false);
   };
 
@@ -271,7 +274,12 @@ function ProfileTab() {
 
   const updateProfile = async () => {
     setSaving(true);
-    try { await api.put('/users/me', { name }); alert('Profile updated!'); } catch {}
+    try { 
+      await api.put('/users/me', { name }); 
+      toast.success('Profile updated!'); 
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to update profile');
+    }
     setSaving(false);
   };
 
@@ -280,10 +288,10 @@ function ProfileTab() {
     setChangingPw(true);
     try {
       await api.put('/users/me/password', { currentPassword: currentPw, newPassword: newPw });
-      alert('Password changed successfully!');
+      toast.success('Password changed successfully!');
       setCurrentPw('');
       setNewPw('');
-    } catch (err: any) { alert(err.response?.data?.error?.message || 'Failed'); }
+    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
     setChangingPw(false);
   };
 

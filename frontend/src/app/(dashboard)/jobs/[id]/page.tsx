@@ -306,3 +306,5 @@ export default function JobDetailPage() {
     </div>
   );
 }
+
+// HMR trigger

@@ -11,6 +11,7 @@ import {
 import api from '@/lib/api';
 import type { Candidate, CandidateApplication } from '@/types';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 const statusColors: Record<string, string> = {
   APPLIED: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -18,7 +19,7 @@ const statusColors: Record<string, string> = {
   INTERVIEW_SCHEDULED: 'bg-purple-100 text-purple-700 border-purple-200',
   SELECTED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   REJECTED: 'bg-red-100 text-red-700 border-red-200',
-  JOINED: 'bg-teal-100 text-teal-700 border-teal-200',
+  ACCEPTED: 'bg-teal-100 text-teal-700 border-teal-200',
   IN_PIPELINE: 'bg-blue-100 text-blue-700 border-blue-200',
 };
 
@@ -57,9 +58,10 @@ export default function CandidateDetailPage() {
     setDeleting(true);
     try {
       await api.delete(`/candidates/${candidate.id}`);
+      toast.success('Candidate deleted successfully');
       router.push('/candidates');
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to delete');
+      toast.error(err.response?.data?.error?.message || 'Failed to delete');
       setDeleting(false);
     }
   }
@@ -73,9 +75,10 @@ export default function CandidateDetailPage() {
       });
       setNoteContent('');
       setNotePublic(false);
+      toast.success('Note added successfully');
       await fetchCandidate();
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to add note');
+      toast.error(err.response?.data?.error?.message || 'Failed to add note');
     }
     setAddingNote(false);
   }
@@ -84,6 +87,7 @@ export default function CandidateDetailPage() {
     if (!candidate) return;
     const url = `${window.location.origin}/candidate/${candidate.publicToken}`;
     await navigator.clipboard.writeText(url);
+    toast.success('Public link copied to clipboard');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -92,16 +96,22 @@ export default function CandidateDetailPage() {
     if (!candidate) return;
     try {
       await api.post(`/candidates/${candidate.id}/regenerate-link`);
+      toast.success('Link regenerated successfully');
       await fetchCandidate();
-    } catch { }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to regenerate link');
+    }
   }
 
   async function togglePublicLink() {
     if (!candidate) return;
     try {
       await api.patch(`/candidates/${candidate.id}/toggle-public-link`);
+      toast.success('Link status updated');
       await fetchCandidate();
-    } catch { }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to toggle link');
+    }
   }
 
   if (loading) {
@@ -131,7 +141,11 @@ export default function CandidateDetailPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Candidates
         </button>
         <div className="flex items-center gap-2 flex-wrap">
-          {(candidate.status === 'JOINED' || candidate.status === 'SELECTED') && (
+          {candidate.employee ? (
+            <button onClick={() => router.push(`/employees/${candidate.employee!.id}`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-smooth shadow-sm">
+              <Briefcase className="w-3.5 h-3.5" /> View Employee Profile
+            </button>
+          ) : (candidate.status === 'ACCEPTED' || candidate.status === 'SELECTED') && (
             <button onClick={() => router.push(`/employees/convert?candidateId=${candidate.id}`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-smooth shadow-sm">
               <UserPlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Convert to</span> Employee
             </button>
@@ -442,3 +456,5 @@ export default function CandidateDetailPage() {
     </div>
   );
 }
+
+// HMR trigger

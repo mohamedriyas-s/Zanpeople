@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import type { Department, Designation } from '@/types';
 
 const employeeSchema = z.object({
@@ -72,9 +73,10 @@ export default function EditEmployeePage() {
     try {
       const payload = { ...data, managerId: data.managerId || null };
       await api.put(`/employees/${params.id}`, payload);
+      toast.success('Employee updated successfully');
       router.push(`/employees/${params.id}`);
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to update employee');
+      toast.error(err.response?.data?.error?.message || 'Failed to update employee');
       setIsSubmitting(false);
     }
   };

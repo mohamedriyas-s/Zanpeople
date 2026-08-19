@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const candidateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(150),
@@ -97,9 +98,10 @@ export default function EditCandidatePage() {
         skills,
       };
       await api.put(`/candidates/${params.id}`, payload);
+      toast.success('Candidate updated successfully');
       router.push(`/candidates/${params.id}`);
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to update candidate');
+      toast.error(err.response?.data?.error?.message || 'Failed to update candidate');
       setIsSubmitting(false);
     }
   };

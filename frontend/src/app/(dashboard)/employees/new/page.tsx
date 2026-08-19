@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 import type { Department, Designation } from '@/types';
 
 const employeeSchema = z.object({
@@ -52,9 +53,10 @@ export default function AddEmployeePage() {
     try {
       const payload = { ...data, managerId: data.managerId || null };
       const res = await api.post('/employees', payload);
+      toast.success('Employee created successfully');
       router.push(`/employees/${res.data.data.id}`);
     } catch (err: any) {
-      alert(err.response?.data?.error?.message || 'Failed to create employee');
+      toast.error(err.response?.data?.error?.message || 'Failed to create employee');
       setIsSubmitting(false);
     }
   };
