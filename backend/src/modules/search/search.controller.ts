@@ -17,6 +17,10 @@ export async function globalSearch(req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    const validStatuses = ['APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'REJECTED', 'ACCEPTED'];
+    const upperQuery = query.toUpperCase().replace(/ /g, '_');
+    const isStatusQuery = validStatuses.includes(upperQuery);
+
     const [candidates, employees] = await Promise.all([
       // Candidate search: Name, Email, Phone, Position Applied, Skills, Status
       prisma.candidate.findMany({
@@ -26,8 +30,8 @@ export async function globalSearch(req: Request, res: Response, next: NextFuncti
             { email: { contains: query, mode: 'insensitive' } },
             { phone: { contains: query } },
             { positionApplied: { contains: query, mode: 'insensitive' } },
-            { status: { equals: query.toUpperCase().replace(/ /g, '_') as any } },
             { skills: { some: { skill: { name: { contains: query, mode: 'insensitive' } } } } },
+            ...(isStatusQuery ? [{ status: { equals: upperQuery as any } }] : []),
           ],
         },
         take: 10,

@@ -1,5 +1,7 @@
-import pdfParse from 'pdf-parse';
+import * as pdfParseModule from 'pdf-parse';
 
+// Handle both ES module default exports and CommonJS exports
+const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 export interface ParsedResumeData {
   name: string | null;
   email: string | null;
@@ -88,7 +90,7 @@ export async function parseResumeBuffer(buffer: Buffer): Promise<ParsedResumeDat
 
   // Normalize whitespace but keep line structure
   const text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = text.split('\n').map((l: string) => l.trim()).filter(Boolean);
 
   const result: ParsedResumeData = {
     name: extractName(lines, text),
@@ -213,7 +215,7 @@ function extractPersonalWebsite(text: string): string | null {
   if (urlMatch) {
     // Return the first one that looks like a personal site
     for (const url of urlMatch) {
-      if (!/mail|smtp|api|cdn|blob|s3/i.test(url)) return url;
+      if (!/mail|smtp|api|cdn|blob|s3|zansphere/i.test(url)) return url;
     }
   }
   return null;
