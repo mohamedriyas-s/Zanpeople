@@ -23,7 +23,7 @@ enum CandidateStatus {
   INTERVIEW_SCHEDULED
   SELECTED
   REJECTED
-  JOINED
+  ACCEPTED
 }
 
 enum NoteType {

@@ -48,7 +48,9 @@ export async function getApplication(req: AuthenticatedRequest, res: Response, n
     const application = await prisma.candidateApplication.findUnique({
       where: { id: req.params.id },
       include: {
-        candidate: true,
+        candidate: {
+          include: { employee: { select: { id: true } } },
+        },
         jobOpening: {
           include: {
             department: { select: { name: true } },

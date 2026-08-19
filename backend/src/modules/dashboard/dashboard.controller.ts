@@ -28,7 +28,7 @@ export async function getStats(_req: Request, res: Response, next: NextFunction)
       prisma.candidate.count({ where: { status: CandidateStatus.INTERVIEW_SCHEDULED } }),
       prisma.candidate.count({ where: { status: CandidateStatus.SELECTED } }),
       prisma.candidate.count({ where: { status: CandidateStatus.REJECTED } }),
-      prisma.candidate.count({ where: { status: CandidateStatus.JOINED } }),
+      prisma.candidate.count({ where: { status: CandidateStatus.ACCEPTED } }),
       prisma.employee.count({ where: { employmentStatus: EmploymentStatus.ACTIVE } }),
     ]);
 

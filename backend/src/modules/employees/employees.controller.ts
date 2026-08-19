@@ -192,8 +192,8 @@ export async function createFromCandidate(req: AuthenticatedRequest, res: Respon
     if (!candidate) {
       throw new AppError(404, 'CANDIDATE_NOT_FOUND', 'Candidate not found');
     }
-    if (candidate.status !== CandidateStatus.JOINED) {
-      throw new AppError(400, 'VALIDATION_ERROR', 'Only candidates with status "Joined" can be converted to employees');
+    if (candidate.status !== CandidateStatus.ACCEPTED) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Only candidates with status "Accepted" can be converted to employees');
     }
 
     // Check if already converted

@@ -6,6 +6,7 @@ import { Menu, Search, Bell, X, User, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import api from '@/lib/api';
 import type { SearchResults, Notification } from '@/types';
+import toast from 'react-hot-toast';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -82,7 +83,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         const res = await api.get(`/search?q=${encodeURIComponent(searchQuery)}`);
         setSearchResults(res.data.data);
         setShowSearchResults(true);
-      } catch {}
+      } catch (err: any) {
+        toast.error(err.response?.data?.error?.message || 'Search failed');
+      }
       setIsSearching(false);
     }, 300);
 
@@ -96,7 +99,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     try {
       const res = await api.get('/notifications?limit=10');
       setNotifications(res.data.data.items);
-    } catch {}
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to load notifications');
+    }
   };
 
   const toggleNotifications = () => {
@@ -109,7 +114,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       await api.patch('/notifications/read-all');
       setUnreadCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch {}
+    } catch (err: any) {
+      toast.error(err.response?.data?.error?.message || 'Failed to mark as read');
+    }
   };
 
   const handleNotificationClick = async (notif: Notification) => {

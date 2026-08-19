@@ -57,7 +57,7 @@ export type CandidateStatus =
   | 'INTERVIEW_SCHEDULED'
   | 'SELECTED'
   | 'REJECTED'
-  | 'JOINED';
+  | 'ACCEPTED';
 
 export interface Candidate {
   id: string;
@@ -91,6 +91,7 @@ export interface Candidate {
   timeline?: TimelineEntry[];
   documents?: Document[];
   applications?: CandidateApplication[];
+  employee?: { id: string } | null;
 }
 
 export interface CandidateNote {

@@ -273,6 +273,7 @@ export async function getCandidate(req: Request, res: Response, next: NextFuncti
             currentStage: { select: { name: true, stageType: true } },
           },
         },
+        employee: { select: { id: true } },
       },
     });
 
