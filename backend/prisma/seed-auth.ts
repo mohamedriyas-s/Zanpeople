@@ -25,7 +25,7 @@ async function main() {
     where: { email: 'hr@zansphere.com' },
     update: {},
     create: {
-      name: 'Priya Sharma',
+      name: 'Zansphere HR',
       email: 'hr@zansphere.com',
       passwordHash: hrHash,
       role: UserRole.HR,
