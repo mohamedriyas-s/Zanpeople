@@ -19,6 +19,7 @@ enum UserRole {
 }
 
 enum CandidateStatus {
+  DRAFT
   APPLIED
   SHORTLISTED
   INTERVIEW_SCHEDULED
@@ -574,4 +575,189 @@ model InterviewRound {
   @@index([stageProgressId])
   @@index([interviewerId])
   @@map("interview_rounds")
+}
+
+// ═══ Career Portal Enums ═══════════════════════════════════════
+
+enum PortalUserStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum OtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum EmploymentType {
+  EMPLOYED
+  FRESHER
+  STUDENT
+  BETWEEN_JOBS
+}
+
+enum QualificationLevel {
+  TENTH
+  TWELFTH
+  DIPLOMA
+  UG
+  PG
+}
+
+enum PreferredJobType {
+  FULL_TIME
+  INTERNSHIP
+  CONTRACT
+}
+
+enum PreferredWorkMode {
+  REMOTE
+  HYBRID
+  ON_SITE
+}
+
+enum PortalApplicationStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  INTERVIEW_SCHEDULED
+  SELECTED
+  REJECTED
+  WITHDRAWN
+}
+
+// ═══ Portal Users (Candidate Accounts) ═════════════════════════
+
+model PortalUser {
+  id           String           @id @default(uuid()) @db.Uuid
+  firstName    String           @map("first_name") @db.VarChar(100)
+  lastName     String           @map("last_name") @db.VarChar(100)
+  email        String           @unique @db.VarChar(255)
+  passwordHash String           @map("password_hash") @db.VarChar(255)
+  phone        String           @db.VarChar(20)
+  status       PortalUserStatus @default(PENDING)
+  isActive     Boolean          @default(true) @map("is_active")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Login throttling
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz
+
+  // Relations
+  otps         Otp[]
+  applications PortalApplication[]
+
+  @@index([email])
+  @@map("portal_users")
+}
+
+// ═══ OTP Tokens ════════════════════════════════════════════════
+
+model Otp {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  code      String     @db.VarChar(255) // hashed OTP
+  purpose   OtpPurpose
+  expiresAt DateTime   @map("expires_at") @db.Timestamptz
+  used      Boolean    @default(false)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  user PortalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("portal_otps")
+}
+
+// ═══ Portal Applications (Full Candidate Profile) ══════════════
+
+model PortalApplication {
+  id        String                  @id @default(uuid()) @db.Uuid
+  userId    String                  @map("user_id") @db.Uuid
+  status    PortalApplicationStatus @default(DRAFT)
+
+  // Step 1: Personal Details
+  fullName        String    @map("full_name") @db.VarChar(200)
+  email           String    @db.VarChar(255)
+  phone           String    @db.VarChar(20)
+  dateOfBirth     DateTime  @map("date_of_birth") @db.Date
+  city            String    @db.VarChar(100)
+  state           String    @db.VarChar(100)
+  willingToRelocate Boolean @default(false) @map("willing_to_relocate")
+  preferredCities  String?  @map("preferred_cities") @db.VarChar(500)
+
+  // Step 2: Professional Profile
+  employmentStatus  EmploymentType @map("employment_status")
+  currentCompany    String         @map("current_company") @db.VarChar(200)
+  currentDesignation String       @map("current_designation") @db.VarChar(200)
+  totalExperienceYears  Int       @map("total_experience_years")
+  totalExperienceMonths Int       @map("total_experience_months")
+  relevantExperienceYears  Int    @map("relevant_experience_years")
+  relevantExperienceMonths Int    @map("relevant_experience_months")
+  currentCtcFixed   Decimal?      @map("current_ctc_fixed") @db.Decimal(12, 2)
+  currentCtcVariable Decimal?     @map("current_ctc_variable") @db.Decimal(12, 2)
+  expectedCtc       Decimal?      @map("expected_ctc") @db.Decimal(12, 2)
+  noticePeriod      String        @map("notice_period") @db.VarChar(50)
+
+  // Step 3: Education
+  highestQualification QualificationLevel @map("highest_qualification")
+  institution          String             @db.VarChar(300)
+  degreeSpecialization String             @map("degree_specialization") @db.VarChar(300)
+  yearOfPassing        Int                @map("year_of_passing")
+  percentageOrCgpa     String             @map("percentage_or_cgpa") @db.VarChar(20)
+
+  // Step 4: Skills (stored as JSON for flexibility)
+  skills Json? @db.JsonB
+
+  // Step 5: Job Preferences
+  preferredJobType    PreferredJobType  @map("preferred_job_type")
+  preferredWorkMode   PreferredWorkMode @map("preferred_work_mode")
+  preferredDepartment String            @map("preferred_department") @db.VarChar(100)
+  roleOfInterest      String?           @map("role_of_interest") @db.VarChar(100)
+  subscribeJobAlerts  Boolean           @default(true) @map("subscribe_job_alerts")
+
+  // Step 6: Documents & Links
+  resumeUrl     String?  @map("resume_url") @db.Text
+  resumeFileName String? @map("resume_file_name") @db.VarChar(255)
+  portfolioUrl  String?  @map("portfolio_url") @db.Text
+  linkedinUrl   String?  @map("linkedin_url") @db.VarChar(500)
+  githubUrl     String?  @map("github_url") @db.VarChar(500)
+  otherLinks    Json?    @map("other_links") @db.JsonB
+  panNumber     String?  @map("pan_number") @db.VarChar(10)
+
+  // Step 7: Consent
+  dpdpConsent   Boolean  @default(false) @map("dpdp_consent")
+
+  // Metadata
+  currentStep   Int      @default(1) @map("current_step")
+  submittedAt   DateTime? @map("submitted_at") @db.Timestamptz
+  candidateId   String?  @map("candidate_id") @db.Uuid // Links to Zanpeople candidates table after submission
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user              PortalUser              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employmentHistory EmploymentHistoryEntry[]
+
+  @@index([status])
+  @@index([userId])
+  @@map("portal_applications")
+}
+
+// ═══ Employment History Entries ════════════════════════════════
+
+model EmploymentHistoryEntry {
+  id            String @id @default(uuid()) @db.Uuid
+  applicationId String @map("application_id") @db.Uuid
+  company       String @db.VarChar(200)
+  role          String @db.VarChar(200)
+  durationFrom  String @map("duration_from") @db.VarChar(20) // e.g. "2020-01"
+  durationTo    String @map("duration_to") @db.VarChar(20)   // e.g. "2023-06" or "Present"
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  application PortalApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("portal_employment_history")
 }

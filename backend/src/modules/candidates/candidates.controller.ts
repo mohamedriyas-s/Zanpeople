@@ -601,20 +601,52 @@ export async function getResumeUrl(req: Request, res: Response, next: NextFuncti
       },
     });
 
-    if (!document) {
-      throw new AppError(404, 'DOCUMENT_NOT_FOUND', 'No resume found for this candidate');
+    let previewUrl = '';
+    let downloadUrl = '';
+    let fileName = '';
+    let mimeType = '';
+
+    if (document) {
+      // Generate time-limited signed URL (15 minutes)
+      const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: document.s3Key });
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+      previewUrl = signedUrl;
+      downloadUrl = signedUrl;
+      fileName = document.fileName;
+      mimeType = document.mimeType;
+    } else {
+      // Fallback: Check career-portal's portal_applications table
+      try {
+        const portalApps: any[] = await prisma.$queryRawUnsafe(`
+          SELECT resume_url, resume_file_name 
+          FROM portal_applications 
+          WHERE candidate_id = $1::uuid 
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `, req.params.id);
+        
+        if (portalApps.length > 0 && portalApps[0].resume_url) {
+          previewUrl = portalApps[0].resume_url;
+          downloadUrl = portalApps[0].resume_url;
+          fileName = portalApps[0].resume_file_name || 'Resume.pdf';
+          
+          const isPdf = fileName.toLowerCase().endsWith('.pdf') || previewUrl.toLowerCase().endsWith('.pdf');
+          mimeType = isPdf ? 'application/pdf' : 'application/octet-stream';
+        } else {
+          throw new AppError(404, 'DOCUMENT_NOT_FOUND', 'No resume found for this candidate');
+        }
+      } catch (e) {
+        if (e instanceof AppError) throw e;
+        throw new AppError(404, 'DOCUMENT_NOT_FOUND', 'No resume found for this candidate');
+      }
     }
 
-    // Generate time-limited signed URL (15 minutes)
-    const command = new GetObjectCommand({ Bucket: S3_BUCKET, Key: document.s3Key });
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
-
     sendSuccess(res, {
-      documentId: document.id,
-      fileName: document.fileName,
-      mimeType: document.mimeType,
-      previewUrl: signedUrl,
-      downloadUrl: signedUrl,
+      documentId: document?.id || null, // null if fallback
+      fileName,
+      mimeType,
+      previewUrl,
+      downloadUrl,
     });
   } catch (error) {
     next(error);

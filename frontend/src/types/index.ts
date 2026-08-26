@@ -52,6 +52,7 @@ export interface DashboardStats {
 // ─── Candidate ───────────────────────────────────────
 
 export type CandidateStatus =
+  | 'DRAFT'
   | 'APPLIED'
   | 'SHORTLISTED'
   | 'INTERVIEW_SCHEDULED'
