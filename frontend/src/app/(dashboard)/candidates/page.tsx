@@ -11,6 +11,7 @@ import api from '@/lib/api';
 import type { Candidate, CandidateStatus } from '@/types';
 
 const statusColors: Record<string, string> = {
+  DRAFT: 'bg-gray-100 text-gray-700',
   APPLIED: 'bg-blue-100 text-blue-700',
   SHORTLISTED: 'bg-amber-100 text-amber-700',
   INTERVIEW_SCHEDULED: 'bg-purple-100 text-purple-700',
@@ -19,7 +20,7 @@ const statusColors: Record<string, string> = {
   ACCEPTED: 'bg-teal-100 text-teal-700',
 };
 
-const allStatuses: CandidateStatus[] = ['APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'REJECTED', 'ACCEPTED'];
+const allStatuses: CandidateStatus[] = ['DRAFT', 'APPLIED', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'SELECTED', 'REJECTED', 'ACCEPTED'];
 
 export default function CandidatesPage() {
   return (
@@ -70,7 +71,9 @@ function CandidatesContent() {
       if (sortBy !== 'createdAt') urlParams.set('sortBy', sortBy);
       if (sortOrder !== 'desc') urlParams.set('sortOrder', sortOrder);
       const qs = urlParams.toString();
-      router.replace(`/candidates${qs ? `?${qs}` : ''}`, { scroll: false });
+      const newUrl = `/candidates${qs ? `?${qs}` : ''}`;
+      // Use history.replaceState to avoid interrupting Next.js navigation (like router.push to details)
+      window.history.replaceState(null, '', newUrl);
     } catch (err) {
       console.error('Failed to fetch candidates:', err);
     }

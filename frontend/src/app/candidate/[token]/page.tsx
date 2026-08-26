@@ -30,6 +30,7 @@ export default function PublicCandidatePage() {
   }, [params.token]);
 
   const statusColors: Record<string, string> = {
+    DRAFT: 'bg-gray-100 text-gray-700',
     APPLIED: 'bg-blue-100 text-blue-700',
     SHORTLISTED: 'bg-amber-100 text-amber-700',
     INTERVIEW_SCHEDULED: 'bg-purple-100 text-purple-700',
