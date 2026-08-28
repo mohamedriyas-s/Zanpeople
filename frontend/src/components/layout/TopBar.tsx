@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, Bell, X, User, Users, Loader2 } from 'lucide-react';
+import { Menu, Search, Bell, X, User, Users, Loader2, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import api from '@/lib/api';
 import type { SearchResults, Notification } from '@/types';
@@ -14,7 +14,7 @@ interface TopBarProps {
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
 
   // ─── Search State ────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +32,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  // ─── Profile State ───────────────────────────────
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -40,6 +44,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -58,7 +65,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     try {
       const res = await api.get('/notifications/unread-count');
       setUnreadCount(res.data.data.unreadCount);
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -121,7 +128,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
   const handleNotificationClick = async (notif: Notification) => {
     if (!notif.isRead) {
-      try { await api.patch(`/notifications/${notif.id}/read`); } catch {}
+      try { await api.patch(`/notifications/${notif.id}/read`); } catch { }
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
     setShowNotifications(false);
@@ -327,13 +334,42 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         </div>
 
         {/* User avatar */}
-        <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[hsl(var(--border))] shrink-0">
-          <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center text-xs font-bold">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-medium text-[hsl(var(--foreground))] leading-tight">{user?.name}</p>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{user?.role}</p>
+        <div className="flex items-center pl-2 sm:pl-3 border-l border-[hsl(var(--border))] shrink-0">
+          <div ref={profileRef} className="relative">
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="flex items-center gap-2 text-left rounded-lg hover:bg-[hsl(var(--accent))] p-1.5 transition-smooth"
+            >
+              <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center text-xs font-bold shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <div className="hidden md:block">
+                <p className="text-sm font-medium text-[hsl(var(--foreground))] leading-tight">{user?.name}</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{user?.role}</p>
+              </div>
+            </button>
+
+            {/* Profile Dropdown */}
+            {showProfileMenu && (
+              <div className="absolute right-0 left-0 top-full mt-1 w-48 bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-2xl shadow-black/15 overflow-hidden z-50 py-1">
+                {isAdmin && (
+                  <button
+                    onClick={() => { setShowProfileMenu(false); router.push('/settings'); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))] transition-smooth"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                )}
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-smooth"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

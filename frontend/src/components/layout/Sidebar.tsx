@@ -2,13 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
 import {
   LayoutDashboard,
   Users,
   UserPlus,
-  Settings,
-  LogOut,
   X,
   Briefcase,
 } from 'lucide-react';
@@ -27,7 +24,6 @@ const navItems = [
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, isAdmin, logout } = useAuth();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -45,12 +41,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Header */}
       <div className="h-16 flex items-center justify-between px-5 border-b border-[hsl(var(--border))]">
         <Link href="/dashboard" className="flex items-center gap-2.5" onClick={onClose}>
-          <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center text-sm font-bold shadow-md shadow-[hsl(var(--primary)/0.2)]">
-            Z
-          </div>
+          <img src="/assets/zanSphereLogo.png" alt="Zansphere Logo" className="w-[100px] h-12 object-contain relative" />
           <div>
-            <span className="text-sm font-bold text-[hsl(var(--foreground))]">Zansphere</span>
-            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block -mt-0.5">HR Portal</span>
+            <span className="absolute text-[10px] text-[hsl(var(--muted-foreground))] block -mt-0.5">HR Portal</span>
           </div>
         </Link>
         <button
@@ -84,46 +77,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Link>
           );
         })}
-
-        {/* Settings — Admin only (FR-AUTH-06) */}
-        {isAdmin && (
-          <Link
-            href="/settings"
-            onClick={onClose}
-            className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-smooth group
-              ${isActive('/settings')
-                ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
-                : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]'
-              }
-            `}
-          >
-            <Settings className={`w-[18px] h-[18px] ${isActive('/settings') ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]'} transition-smooth`} />
-            Settings
-            {isActive('/settings') && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[hsl(var(--primary))]" />}
-          </Link>
-        )}
       </nav>
-
-      {/* User Info + Logout */}
-      <div className="p-3 border-t border-[hsl(var(--border))]">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center text-xs font-bold">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate">{user?.name}</p>
-            <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">{user?.role}</p>
-          </div>
-        </div>
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-smooth"
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          Sign out
-        </button>
-      </div>
     </aside>
   );
 }
