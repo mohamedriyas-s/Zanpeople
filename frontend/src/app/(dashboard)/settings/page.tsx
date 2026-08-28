@@ -74,13 +74,14 @@ function CompanyProfileTab() {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get('/settings/company-profile').then(res => {
       setProfile(res.data.data);
       setName(res.data.data.companyName);
       setAddress(res.data.data.address || '');
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
@@ -97,9 +98,11 @@ function CompanyProfileTab() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold">Company Profile</h3>
-        {!editing && <button onClick={() => setEditing(true)} className="text-xs text-[hsl(var(--primary))] hover:underline">Edit</button>}
+        {!editing && !loading && <button onClick={() => setEditing(true)} className="text-xs text-[hsl(var(--primary))] hover:underline">Edit</button>}
       </div>
-      {editing ? (
+      {loading ? (
+        <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" /></div>
+      ) : editing ? (
         <div className="space-y-4 max-w-md">
           <div><label className="block text-xs font-medium mb-1">Company Name</label><input value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" /></div>
           <div><label className="block text-xs font-medium mb-1">Address</label><textarea value={address} onChange={e => setAddress(e.target.value)} rows={3} className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" /></div>
@@ -126,11 +129,16 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchItems(); }, [type]);
 
   const fetchItems = () => {
-    api.get(`/settings/${type}?activeOnly=false`).then(res => setItems(res.data.data)).catch(() => {});
+    setLoading(true);
+    api.get(`/settings/${type}?activeOnly=false`)
+       .then(res => setItems(res.data.data))
+       .catch(() => {})
+       .finally(() => setLoading(false));
   };
 
   const addItem = async () => {
@@ -171,29 +179,33 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
           <Plus className="w-4 h-4" />
         </button>
       </div>
-      <div className="space-y-1">
-        {items.map(item => (
-          <div key={item.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-smooth">
-            {editingId === item.id ? (
-              <div className="flex items-center gap-2 flex-1">
-                <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-1 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))]" />
-                <button onClick={() => updateItem(item.id)} className="text-xs text-[hsl(var(--primary))] font-medium">Save</button>
-                <button onClick={() => setEditingId(null)} className="text-xs text-[hsl(var(--muted-foreground))]">Cancel</button>
-              </div>
-            ) : (
-              <>
-                <span className={`text-sm ${item.isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))] line-through'}`}>{item.name}</span>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { setEditingId(item.id); setEditName(item.name); }} className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => toggleItem(item.id)} className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
-                    {item.isActive ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
-                  </button>
+      {loading ? (
+        <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" /></div>
+      ) : (
+        <div className="space-y-1">
+          {items.map(item => (
+            <div key={item.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-smooth">
+              {editingId === item.id ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-1 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[hsl(var(--ring))]" />
+                  <button onClick={() => updateItem(item.id)} className="text-xs text-[hsl(var(--primary))] font-medium">Save</button>
+                  <button onClick={() => setEditingId(null)} className="text-xs text-[hsl(var(--muted-foreground))]">Cancel</button>
                 </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+              ) : (
+                <>
+                  <span className={`text-sm ${item.isActive ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))] line-through'}`}>{item.name}</span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setEditingId(item.id); setEditName(item.name); }} className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"><Edit2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => toggleItem(item.id)} className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+                      {item.isActive ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -205,8 +217,14 @@ function UsersTab() {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'HR' as 'ADMIN' | 'HR' });
   const [adding, setAdding] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.get('/settings/users').then(res => setUsers(res.data.data)).catch(() => {}); }, []);
+  useEffect(() => { 
+    api.get('/settings/users')
+       .then(res => setUsers(res.data.data))
+       .catch(() => {})
+       .finally(() => setLoading(false)); 
+  }, []);
 
   const addUser = async () => {
     setAdding(true);
@@ -214,10 +232,15 @@ function UsersTab() {
       await api.post('/settings/users', form);
       setShowAdd(false);
       setForm({ name: '', email: '', password: '', role: 'HR' });
+      setLoading(true);
       const res = await api.get('/settings/users');
       setUsers(res.data.data);
+      setLoading(false);
       toast.success('User created successfully');
-    } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
+    } catch (err: any) { 
+      toast.error(err.response?.data?.error?.message || 'Failed'); 
+      setLoading(false);
+    }
     setAdding(false);
   };
 
@@ -229,14 +252,18 @@ function UsersTab() {
           <Plus className="w-3 h-3" /> Add User
         </button>
       </div>
-      <div className="space-y-2">
-        {users.map(u => (
-          <div key={u.id} className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">
-            <div><p className="text-sm font-medium">{u.name}</p><p className="text-xs text-[hsl(var(--muted-foreground))]">{u.email}</p></div>
-            <span className="text-[10px] px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-full font-medium">{u.role}</span>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--primary))]" /></div>
+      ) : (
+        <div className="space-y-2">
+          {users.map(u => (
+            <div key={u.id} className="flex items-center justify-between p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">
+              <div><p className="text-sm font-medium">{u.name}</p><p className="text-xs text-[hsl(var(--muted-foreground))]">{u.email}</p></div>
+              <span className="text-[10px] px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-full font-medium">{u.role}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
