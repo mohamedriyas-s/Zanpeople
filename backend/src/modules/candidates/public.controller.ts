@@ -68,13 +68,12 @@ export async function getPublicCandidate(req: Request, res: Response, next: Next
       resumeFileName = resumeDoc.fileName;
       resumeMimeType = resumeDoc.mimeType;
     } else {
-      // Fallback: Check if resume exists in career-portal's portal_applications table
+      // Fallback: Check if resume exists in career-portal's portal_profiles table
       try {
         const portalApps: any[] = await prisma.$queryRawUnsafe(`
           SELECT resume_url, resume_file_name 
-          FROM portal_applications 
-          WHERE candidate_id = $1::uuid 
-          ORDER BY created_at DESC 
+          FROM portal_profiles 
+          WHERE zanpeople_id = $1::uuid 
           LIMIT 1
         `, candidate.id);
         
