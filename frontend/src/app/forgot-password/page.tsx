@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] p-4">
       <div className="w-full max-w-[420px]">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[hsl(var(--primary))] text-white text-xl font-bold mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">Z</div>
+          <img src="/assets/zanSphereLogo.png" alt="Zansphere Logo" className="h-16 w-auto mx-auto mb-4 object-contain" />
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Forgot Password</h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">We&apos;ll send you a reset link</p>
         </div>
