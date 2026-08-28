@@ -365,6 +365,7 @@ model Notification {
   referenceType ReferenceType  @map("reference_type")
   referenceId   String         @map("reference_id") @db.Uuid
   isRead        Boolean        @default(false) @map("is_read")
+  actorId       String?        @map("actor_id") @db.Uuid
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([createdAt])

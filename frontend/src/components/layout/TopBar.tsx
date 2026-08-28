@@ -30,6 +30,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
   // ─── Profile State ───────────────────────────────
@@ -103,11 +104,14 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
   // Fetch notifications
   const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
     try {
       const res = await api.get('/notifications?limit=10');
       setNotifications(res.data.data.items);
     } catch (err: any) {
       toast.error(err.response?.data?.error?.message || 'Failed to load notifications');
+    } finally {
+      setIsLoadingNotifications(false);
     }
   };
 
@@ -304,7 +308,12 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                 )}
               </div>
               <div className="max-h-[360px] overflow-y-auto">
-                {notifications.length === 0 ? (
+                {isLoadingNotifications ? (
+                  <div className="p-8 flex flex-col items-center justify-center">
+                    <Loader2 className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--primary))] animate-spin" />
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading notifications...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="p-8 text-center">
                     <Bell className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground)/0.3)]" />
                     <p className="text-sm text-[hsl(var(--muted-foreground))]">No notifications yet</p>

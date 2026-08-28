@@ -173,6 +173,7 @@ export async function createEmployee(req: AuthenticatedRequest, res: Response, n
         message: `New employee "${employee.fullName}" added to ${employee.department.name}`,
         referenceType: ReferenceType.EMPLOYEE,
         referenceId: employee.id,
+        actorId: (req as AuthenticatedRequest).user?.id,
       },
     });
 
@@ -247,6 +248,7 @@ export async function createFromCandidate(req: AuthenticatedRequest, res: Respon
         message: `"${employee.fullName}" converted from candidate to employee`,
         referenceType: ReferenceType.EMPLOYEE,
         referenceId: employee.id,
+        actorId: (req as AuthenticatedRequest).user?.id,
       },
     });
 

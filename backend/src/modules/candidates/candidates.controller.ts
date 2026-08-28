@@ -233,6 +233,7 @@ export async function createCandidate(req: AuthenticatedRequest, res: Response, 
         message: `New candidate "${candidate.name}" applied for ${candidate.positionApplied}`,
         referenceType: ReferenceType.CANDIDATE,
         referenceId: candidate.id,
+        actorId: (req as AuthenticatedRequest).user?.id,
       },
     });
 
@@ -440,6 +441,7 @@ export async function updateCandidateStatus(req: AuthenticatedRequest, res: Resp
           message: `Interview scheduled for "${candidate.name}" — ${candidate.positionApplied}`,
           referenceType: ReferenceType.CANDIDATE,
           referenceId: candidateId,
+          actorId: (req as AuthenticatedRequest).user?.id,
         },
       });
     }

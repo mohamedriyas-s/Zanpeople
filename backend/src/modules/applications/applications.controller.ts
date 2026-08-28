@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '../../middleware/auth';
 import { sendSuccess } from '../../utils/response';
 import { z } from 'zod';
 import { sendNotificationEmail } from '../../utils/email';
+import { NotificationType, ReferenceType } from '@prisma/client';
 
 // ─── Validators ──────────────────────────────────────
 
@@ -136,6 +137,17 @@ export async function advanceStage(req: AuthenticatedRequest, res: Response, nex
           where: { id: application.candidateId },
           data: { status: 'SELECTED' },
         });
+
+        // Add Notification
+        await tx.notification.create({
+          data: {
+            type: NotificationType.APPLICATION_SELECTED,
+            message: `Candidate "${application.candidate.name}" has been selected!`,
+            referenceType: ReferenceType.APPLICATION,
+            referenceId: application.id,
+            actorId: req.user?.id,
+          }
+        });
       });
 
       sendSuccess(res, { message: 'Application completed and candidate selected' });
@@ -171,6 +183,17 @@ export async function advanceStage(req: AuthenticatedRequest, res: Response, nex
       await tx.candidateApplication.update({
         where: { id: application.id },
         data: { currentStageId: nextStage.id },
+      });
+
+      // Add Notification
+      await tx.notification.create({
+        data: {
+          type: NotificationType.STAGE_ADVANCED,
+          message: `Application for "${application.candidate.name}" advanced to ${nextStage.name}`,
+          referenceType: ReferenceType.APPLICATION,
+          referenceId: application.id,
+          actorId: req.user?.id,
+        }
       });
     });
 
@@ -217,6 +240,17 @@ export async function rejectApplication(req: AuthenticatedRequest, res: Response
       await tx.candidate.update({
         where: { id: application.candidateId },
         data: { status: 'REJECTED' },
+      });
+
+      // Add Notification
+      await tx.notification.create({
+        data: {
+          type: NotificationType.APPLICATION_REJECTED,
+          message: `Application rejected`, // Short message because we don't have candidate name joined in this query
+          referenceType: ReferenceType.APPLICATION,
+          referenceId: application.id,
+          actorId: req.user?.id,
+        }
       });
     });
 
@@ -266,6 +300,17 @@ export async function assignTask(req: AuthenticatedRequest, res: Response, next:
     } catch (e) {
       console.error('Failed to send task email', e);
     }
+
+    // Add Notification
+    await prisma.notification.create({
+      data: {
+        type: NotificationType.TASK_ASSIGNED,
+        message: `Task "${task.title}" assigned to ${sp.application.candidate.name}`,
+        referenceType: ReferenceType.APPLICATION,
+        referenceId: appId,
+        actorId: req.user?.id,
+      }
+    });
 
     sendSuccess(res, task, 201);
   } catch (error) {

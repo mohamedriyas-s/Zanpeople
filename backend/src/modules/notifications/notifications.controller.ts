@@ -2,22 +2,27 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../config/database';
 import { sendSuccess, sendPaginated } from '../../utils/response';
 import { AppError } from '../../middleware/errorHandler';
+import { AuthenticatedRequest } from '../../middleware/auth';
 
-// ─── List Notifications ──────────────────────────────
+// ✨ List Notifications ✨
 
 export async function listNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const userId = (req as AuthenticatedRequest).user?.id;
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
     const skip = (page - 1) * limit;
 
+    const whereClause = userId ? { NOT: { actorId: userId } } : {};
+
     const [items, total] = await Promise.all([
       prisma.notification.findMany({
+        where: whereClause,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.notification.count(),
+      prisma.notification.count({ where: whereClause }),
     ]);
 
     sendPaginated(res, items, total, page, limit);
@@ -26,18 +31,21 @@ export async function listNotifications(req: Request, res: Response, next: NextF
   }
 }
 
-// ─── Get Unread Count ────────────────────────────────
+// ✨ Get Unread Count ✨
 
-export async function getUnreadCount(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getUnreadCount(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const count = await prisma.notification.count({ where: { isRead: false } });
+    const userId = (req as AuthenticatedRequest).user?.id;
+    const whereClause = userId ? { isRead: false, NOT: { actorId: userId } } : { isRead: false };
+    
+    const count = await prisma.notification.count({ where: whereClause });
     sendSuccess(res, { unreadCount: count });
   } catch (error) {
     next(error);
   }
 }
 
-// ─── Mark Single as Read ─────────────────────────────
+// ✨ Mark Single as Read ✨
 
 export async function markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -57,14 +65,25 @@ export async function markAsRead(req: Request, res: Response, next: NextFunction
   }
 }
 
-// ─── Mark All as Read ────────────────────────────────
+// ✨ Mark All as Read ✨
 
-export async function markAllAsRead(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function markAllAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    await prisma.notification.updateMany({
-      where: { isRead: false },
-      data: { isRead: true },
+    const userId = (req as AuthenticatedRequest).user?.id;
+    const whereClause = userId ? { isRead: false, NOT: { actorId: userId } } : { isRead: false };
+
+    // Find all unread notifications meant for this user
+    const notificationsToMark = await prisma.notification.findMany({
+      where: whereClause,
+      select: { id: true }
     });
+
+    if (notificationsToMark.length > 0) {
+      await prisma.notification.updateMany({
+        where: { id: { in: notificationsToMark.map(n => n.id) } },
+        data: { isRead: true },
+      });
+    }
 
     sendSuccess(res, { message: 'All notifications marked as read' });
   } catch (error) {
