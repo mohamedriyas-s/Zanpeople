@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { Plus, Edit2, ToggleLeft, ToggleRight, Loader2, Building2, Users, Briefcase, Layers, User, GitMerge } from 'lucide-react';
+import { Plus, Edit2, ToggleLeft, ToggleRight, Loader2, Building2, Users, Briefcase, Layers, User, GitMerge, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import type { Department, Designation, CompanyProfile, User as UserType } from '@/types';
@@ -265,17 +265,22 @@ function UsersTab() {
 // ─── Profile Tab ─────────────────────────────────────
 
 function ProfileTab() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
   const [changingPw, setChangingPw] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const updateProfile = async () => {
     setSaving(true);
     try { 
       await api.put('/users/me', { name }); 
+      updateUser({ name });
       toast.success('Profile updated!'); 
     } catch (err: any) {
       toast.error(err.response?.data?.error?.message || 'Failed to update profile');
@@ -284,13 +289,18 @@ function ProfileTab() {
   };
 
   const changePassword = async () => {
-    if (!currentPw || !newPw) return;
+    if (!currentPw || !newPw || !confirmPw) return;
+    if (newPw !== confirmPw) {
+      toast.error('New passwords do not match');
+      return;
+    }
     setChangingPw(true);
     try {
       await api.put('/users/me/password', { currentPassword: currentPw, newPassword: newPw });
       toast.success('Password changed successfully!');
       setCurrentPw('');
       setNewPw('');
+      setConfirmPw('');
     } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
     setChangingPw(false);
   };
@@ -308,8 +318,24 @@ function ProfileTab() {
       <div>
         <h3 className="text-sm font-semibold mb-3">Change Password</h3>
         <div className="space-y-3">
-          <input type="password" placeholder="Current password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
-          <input type="password" placeholder="New password (min 8 chars + 1 number)" value={newPw} onChange={e => setNewPw(e.target.value)} className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+          <div className="relative">
+            <input type={showCurrentPw ? "text" : "password"} placeholder="Current password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} className="w-full pl-3 pr-10 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+            <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+              {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="relative">
+            <input type={showNewPw ? "text" : "password"} placeholder="New password (min 8 chars + 1 number)" value={newPw} onChange={e => setNewPw(e.target.value)} className="w-full pl-3 pr-10 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+            <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+              {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="relative">
+            <input type={showConfirmPw ? "text" : "password"} placeholder="Confirm new password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} className="w-full pl-3 pr-10 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+            <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+              {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
           <button onClick={changePassword} disabled={changingPw} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white text-sm rounded-lg hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50">{changingPw ? 'Changing...' : 'Change Password'}</button>
         </div>
       </div>

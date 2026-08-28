@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function ResetPasswordPage() {
@@ -21,6 +21,8 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +43,7 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] p-4">
       <div className="w-full max-w-[420px]">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[hsl(var(--primary))] text-white text-xl font-bold mb-4 shadow-lg shadow-[hsl(var(--primary)/0.25)]">Z</div>
+          <img src="/assets/zanSphereLogo.png" alt="Zansphere Logo" className="h-16 w-auto mx-auto mb-4 object-contain" />
           <h1 className="text-2xl font-bold">Reset Password</h1>
         </div>
         <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-2xl shadow-xl p-8">
@@ -54,10 +56,26 @@ function ResetPasswordForm() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && <div className="p-3 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] rounded-lg text-sm text-[hsl(var(--destructive))]">{error}</div>}
-              <div><label className="block text-sm font-medium mb-1.5">New Password</label><input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 chars + 1 number"
-                className="w-full px-3.5 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" /></div>
-              <div><label className="block text-sm font-medium mb-1.5">Confirm Password</label><input type="password" required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Re-enter password"
-                className="w-full px-3.5 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" /></div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">New Password</label>
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 chars + 1 number"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Confirm Password</label>
+                <div className="relative">
+                  <input type={showConfirm ? "text" : "password"} required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Re-enter password"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]" />
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
               <button type="submit" disabled={loading} className="w-full py-2.5 bg-[hsl(var(--primary))] text-white text-sm font-semibold rounded-lg hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 transition-smooth shadow-md">
                 {loading ? <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Resetting...</span> : 'Reset Password'}
               </button>
