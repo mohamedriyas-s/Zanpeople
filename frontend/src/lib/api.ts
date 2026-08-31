@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { redirectTo } from './redirect';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 
@@ -29,7 +30,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        redirectTo('/login');
       }
     }
     return Promise.reject(error);

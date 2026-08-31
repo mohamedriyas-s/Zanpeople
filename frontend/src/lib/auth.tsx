@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import api from './api';
+import { redirectTo } from './redirect';
 
 interface User {
   id: string;
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     // Also call server logout (fire-and-forget)
     api.post('/auth/logout').catch(() => {});
-    window.location.href = '/login';
+    redirectTo('/login');
   }, []);
 
   const updateUser = useCallback((userData: Partial<User>) => {
