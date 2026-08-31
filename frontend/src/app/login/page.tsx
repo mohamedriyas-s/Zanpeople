@@ -67,8 +67,8 @@ export default function LoginPage() {
       <div className="relative w-full max-w-[420px]">
         {/* Logo & Branding */}
         <div className="text-center mb-8">
-            <img src="/assets/zanSphereLogo.png" alt="Zansphere Logo" className="h-16 w-auto mx-auto mb-4 object-contain" />
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Zansphere HR Portal</h1>
+          <img src="/assets/zanSphereLogo.png" alt="Zansphere Logo" className="h-16 w-auto mx-auto mb-4 object-contain" />
+          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">HR Portal</h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Sign in to your account</p>
         </div>
 
