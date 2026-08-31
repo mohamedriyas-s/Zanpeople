@@ -84,11 +84,17 @@ function ConvertContent() {
     setIsSubmitting(true);
     setError('');
     try {
+      if (!candidateId) throw new Error('Candidate ID is missing from the URL.');
+      
       const payload = { ...data, managerId: data.managerId || null };
       const res = await api.post(`/employees/from-candidate/${candidateId}`, payload);
       router.push(`/employees/${res.data.data.id}`);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to convert candidate');
+      console.error('Conversion Error:', err);
+      const errorMessage = err.response?.data?.error?.message 
+        || err.message 
+        || (err.response?.status ? `HTTP Error ${err.response.status}` : 'Failed to convert candidate');
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };

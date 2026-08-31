@@ -68,26 +68,66 @@ export async function getPublicCandidate(req: Request, res: Response, next: Next
       resumeFileName = resumeDoc.fileName;
       resumeMimeType = resumeDoc.mimeType;
     } else {
-      // Fallback: Check if resume exists in career-portal's portal_profiles table
+      // Fallback: Check career-portal's portal_applications table or legacy portal_profiles
       try {
-        const portalApps: any[] = await prisma.$queryRawUnsafe(`
-          SELECT resume_url, resume_file_name 
-          FROM portal_profiles 
-          WHERE zanpeople_id = $1::uuid 
-          LIMIT 1
-        `, candidate.id);
-        
-        if (portalApps.length > 0 && portalApps[0].resume_url) {
-          resumePreviewUrl = portalApps[0].resume_url;
-          resumeDownloadUrl = portalApps[0].resume_url;
-          resumeFileName = portalApps[0].resume_file_name || 'Resume.pdf';
+        let resumeUrl = null;
+        let resumeName = null;
+
+        try {
+          const tableCheck: any[] = await prisma.$queryRawUnsafe(`
+            SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = 'portal_applications'
+            );
+          `);
+
+          if (tableCheck[0]?.exists) {
+            const portalApps: any[] = await prisma.$queryRawUnsafe(`
+              SELECT resume_url, resume_file_name 
+              FROM portal_applications 
+              WHERE candidate_id = $1::uuid 
+              ORDER BY created_at DESC 
+              LIMIT 1
+            `, candidate.id);
+            
+            if (portalApps.length > 0 && portalApps[0].resume_url) {
+              resumeUrl = portalApps[0].resume_url;
+              resumeName = portalApps[0].resume_file_name;
+            }
+          }
+        } catch (e: any) {
+          // Ignore
+        }
+
+        if (!resumeUrl) {
+          try {
+            const legacyApps: any[] = await prisma.$queryRawUnsafe(`
+              SELECT resume_url, resume_file_name 
+              FROM portal_profiles 
+              WHERE zanpeople_id = $1::uuid 
+              LIMIT 1
+            `, candidate.id);
+
+            if (legacyApps.length > 0 && legacyApps[0].resume_url) {
+              resumeUrl = legacyApps[0].resume_url;
+              resumeName = legacyApps[0].resume_file_name;
+            }
+          } catch (e: any) {
+             // Legacy table doesn't exist either.
+          }
+        }
+
+        if (resumeUrl) {
+          resumePreviewUrl = resumeUrl;
+          resumeDownloadUrl = resumeUrl;
+          resumeFileName = resumeName || 'Resume.pdf';
           
           // For career portal, we can assume PDF if it ends with .pdf
           const isPdf = resumeFileName.toLowerCase().endsWith('.pdf') || resumePreviewUrl.toLowerCase().endsWith('.pdf');
           resumeMimeType = isPdf ? 'application/pdf' : 'application/octet-stream';
         }
       } catch (e) {
-        // portal_applications table might not exist if career-portal is not set up
         console.warn('Could not query portal_applications for resume fallback:', e);
       }
     }

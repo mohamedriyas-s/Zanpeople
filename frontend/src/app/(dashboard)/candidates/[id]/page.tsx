@@ -6,7 +6,7 @@ import {
   ArrowLeft, Edit, Trash2, Copy, Link2, Link2Off, RefreshCw,
   Mail, Phone, MapPin, Briefcase, Clock, DollarSign,
   ExternalLink, FileText, MessageSquare, History, Loader2,
-  CheckCircle2, Calendar, Globe, UserPlus,
+  CheckCircle2, Calendar, Globe, UserPlus, Eye, Download
 } from 'lucide-react';
 import api from '@/lib/api';
 import type { Candidate, CandidateApplication } from '@/types';
@@ -31,7 +31,11 @@ export default function CandidateDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notes' | 'timeline' | 'applications'>('applications');
+  const [activeTab, setActiveTab] = useState<'notes' | 'timeline' | 'applications' | 'resume'>('applications');
+
+  const [resumeData, setResumeData] = useState<{ previewUrl: string, downloadUrl: string, fileName: string } | null>(null);
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
 
   useEffect(() => {
     fetchCandidate();
@@ -46,6 +50,25 @@ export default function CandidateDetailPage() {
     }
     setLoading(false);
   }
+
+  async function fetchResume() {
+    if (resumeData || resumeLoading) return;
+    setResumeLoading(true);
+    setResumeError('');
+    try {
+      const res = await api.get(`/candidates/${params.id}/resume`);
+      setResumeData(res.data.data);
+    } catch (err: any) {
+      setResumeError(err.response?.data?.error?.message || 'Failed to load resume');
+    }
+    setResumeLoading(false);
+  }
+
+  useEffect(() => {
+    if (activeTab === 'resume') {
+      fetchResume();
+    }
+  }, [activeTab]);
 
   // Note form state
   const [noteType, setNoteType] = useState<'INTERVIEW_COMMENT' | 'HR_COMMENT'>('HR_COMMENT');
@@ -298,6 +321,13 @@ export default function CandidateDetailPage() {
             <History className="w-4 h-4 inline mr-1.5" />
             Timeline ({candidate.timeline?.length || 0})
           </button>
+          <button
+            onClick={() => setActiveTab('resume')}
+            className={`flex-1 px-5 py-3 text-sm font-medium transition-smooth ${activeTab === 'resume' ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}
+          >
+            <FileText className="w-4 h-4 inline mr-1.5" />
+            Resume
+          </button>
         </div>
 
         <div className="p-5">
@@ -402,7 +432,7 @@ export default function CandidateDetailPage() {
                 ))
               )}
             </div>
-          ) : (
+          ) : activeTab === 'timeline' ? (
             <div className="space-y-0">
               {(candidate.timeline || []).length === 0 ? (
                 <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-6">No timeline entries</p>
@@ -426,7 +456,41 @@ export default function CandidateDetailPage() {
                 ))
               )}
             </div>
-          )}
+          ) : activeTab === 'resume' ? (
+            <div className="space-y-4">
+              {resumeLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[hsl(var(--primary))] animate-spin mb-4" />
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">Loading resume preview...</p>
+                </div>
+              ) : resumeError ? (
+                <div className="text-center py-12">
+                  <p className="text-sm text-[hsl(var(--destructive))] mb-4">{resumeError}</p>
+                  <button onClick={fetchResume} className="px-4 py-2 border border-[hsl(var(--border))] rounded-lg text-sm hover:bg-[hsl(var(--accent))] transition-smooth">
+                    Try Again
+                  </button>
+                </div>
+              ) : resumeData ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-[hsl(var(--accent))] p-3 rounded-lg border border-[hsl(var(--border))]">
+                    <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate pr-4">{resumeData.fileName}</span>
+                    <a href={resumeData.downloadUrl} download={resumeData.fileName} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-medium hover:bg-[hsl(var(--primary)/0.9)] transition-smooth shrink-0">
+                      <Download className="w-3.5 h-3.5" /> Download
+                    </a>
+                  </div>
+                  <div className="w-full h-[600px] border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      src={resumeData.previewUrl}
+                      className="w-full h-full border-0"
+                      title="Resume Preview"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-[hsl(var(--muted-foreground))] text-center py-6">No resume available</p>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 
