@@ -47,11 +47,7 @@ export default function AddCandidatePage() {
   const [selectedJobId, setSelectedJobId] = useState(searchParams.get('jobId') || '');
   const [loadingJobs, setLoadingJobs] = useState(true);
 
-  // Autofill state
-  const [isParsing, setIsParsing] = useState(false);
-  const [parseStatus, setParseStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [parseMessage, setParseMessage] = useState('');
-  const [autofillFields, setAutofillFields] = useState<string[]>([]);
+
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<CandidateForm>({
     resolver: zodResolver(candidateSchema),
@@ -68,73 +64,6 @@ export default function AddCandidatePage() {
 
   async function handleResumeUpload(file: File) {
     setResumeFile(file);
-    setParseStatus('idle');
-    setParseMessage('');
-    setAutofillFields([]);
-
-    // Auto-trigger parse if it's a PDF
-    if (file.type === 'application/pdf') {
-      await parseAndAutofill(file);
-    }
-  }
-
-  async function parseAndAutofill(file: File) {
-    setIsParsing(true);
-    setParseStatus('idle');
-    setParseMessage('');
-    setAutofillFields([]);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await api.post('/candidates/parse-resume', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      const parsed = res.data.data;
-      const filled: string[] = [];
-
-      // Autofill each field if parsed value exists
-      if (parsed.name) { setValue('name', parsed.name); filled.push('Name'); }
-      if (parsed.email) { setValue('email', parsed.email); filled.push('Email'); }
-      if (parsed.phone) { setValue('phone', parsed.phone); filled.push('Phone'); }
-      if (parsed.positionApplied) { setValue('positionApplied', parsed.positionApplied); filled.push('Position'); }
-      if (parsed.city) { setValue('city', parsed.city); filled.push('City'); }
-      if (parsed.state) { setValue('state', parsed.state); filled.push('State'); }
-      if (parsed.country) { setValue('country', parsed.country); filled.push('Country'); }
-      if (parsed.address) { setValue('address', parsed.address); filled.push('Address'); }
-      if (parsed.yearsExperience != null) { setValue('yearsExperience', parsed.yearsExperience.toString()); filled.push('Experience'); }
-      if (parsed.currentCompany) { setValue('currentCompany', parsed.currentCompany); filled.push('Company'); }
-      if (parsed.noticePeriod) { setValue('noticePeriod', parsed.noticePeriod); filled.push('Notice Period'); }
-      if (parsed.linkedinUrl) { setValue('linkedinUrl', parsed.linkedinUrl); filled.push('LinkedIn'); }
-      if (parsed.githubUrl) { setValue('githubUrl', parsed.githubUrl); filled.push('GitHub'); }
-      if (parsed.portfolioUrl) { setValue('portfolioUrl', parsed.portfolioUrl); filled.push('Portfolio'); }
-      if (parsed.personalWebsiteUrl) { setValue('personalWebsiteUrl', parsed.personalWebsiteUrl); filled.push('Website'); }
-
-      // Set skills
-      if (parsed.skills && parsed.skills.length > 0) {
-        setSkills(prev => {
-          const combined = new Set([...prev, ...parsed.skills]);
-          return Array.from(combined);
-        });
-        filled.push(`${parsed.skills.length} Skills`);
-      }
-
-      setAutofillFields(filled);
-      if (filled.length > 0) {
-        setParseStatus('success');
-        setParseMessage(`Autofilled ${filled.length} fields from resume`);
-      } else {
-        setParseStatus('error');
-        setParseMessage('Could not extract details from this resume. Please fill manually.');
-      }
-    } catch (err: any) {
-      setParseStatus('error');
-      setParseMessage(err.response?.data?.error?.message || 'Failed to parse resume. Please fill manually.');
-    }
-
-    setIsParsing(false);
   }
 
   // ─── Skills helpers ──────────────────────────────────
@@ -229,7 +158,7 @@ export default function AddCandidatePage() {
         <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Upload a resume to autofill details, or enter them manually.</p>
       </div>
 
-      {/* ═══════════════ RESUME UPLOAD + AUTOFILL ═══════════════ */}
+      {/* ═══════════════ RESUME UPLOAD ═══════════════ */}
       <div className="bg-gradient-to-br from-[hsl(var(--primary)/0.04)] to-[hsl(var(--primary)/0.01)] border-2 border-dashed border-[hsl(var(--primary)/0.2)] rounded-2xl p-4 sm:p-6 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[hsl(var(--primary)/0.05)] rounded-full blur-2xl pointer-events-none" />
@@ -238,18 +167,18 @@ export default function AddCandidatePage() {
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Autofill from Resume</h3>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">Upload a PDF and we&apos;ll extract candidate details automatically</p>
+              <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Upload Resume</h3>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Upload a PDF resume for the candidate profile</p>
             </div>
           </div>
 
           {/* Upload Zone */}
           <div
-            className={`mt-4 border border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl p-5 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--primary)/0.02)] transition-all duration-300 ${isParsing ? 'pointer-events-none opacity-70' : ''}`}
-            onClick={() => !isParsing && document.getElementById('resume-upload')?.click()}
+            className={`mt-4 border border-[hsl(var(--border))] bg-[hsl(var(--card))] rounded-xl p-5 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--primary)/0.02)] transition-all duration-300`}
+            onClick={() => document.getElementById('resume-upload')?.click()}
             onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-[hsl(var(--primary))]', 'bg-[hsl(var(--primary)/0.05)]'); }}
             onDragLeave={(e) => { e.currentTarget.classList.remove('border-[hsl(var(--primary))]', 'bg-[hsl(var(--primary)/0.05)]'); }}
             onDrop={(e) => {
@@ -267,20 +196,7 @@ export default function AddCandidatePage() {
               onChange={(e) => { if (e.target.files?.[0]) handleResumeUpload(e.target.files[0]); }}
             />
 
-            {isParsing ? (
-              <div className="flex flex-col items-center gap-3 py-2">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full border-2 border-[hsl(var(--primary)/0.2)] flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-[hsl(var(--primary))] animate-spin" />
-                  </div>
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[hsl(var(--primary))] animate-spin" style={{ animationDuration: '1.5s' }} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[hsl(var(--foreground))]">Parsing resume...</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">Extracting name, skills, experience, and more</p>
-                </div>
-              </div>
-            ) : resumeFile ? (
+            {resumeFile ? (
               <div className="flex items-center justify-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
                   <FileText className="w-5 h-5" />
@@ -294,71 +210,21 @@ export default function AddCandidatePage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setResumeFile(null);
-                    setParseStatus('idle');
-                    setParseMessage('');
-                    setAutofillFields([]);
                   }}
                   className="ml-2 p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-smooth"
                 >
                   <X className="w-4 h-4" />
                 </button>
-                {parseStatus !== 'success' && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); parseAndAutofill(resumeFile); }}
-                    className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 bg-[hsl(var(--primary))] text-white text-sm font-medium rounded-lg hover:bg-[hsl(var(--primary)/0.9)] transition-smooth shadow-md shadow-[hsl(var(--primary)/0.2)]"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Autofill
-                  </button>
-                )}
               </div>
             ) : (
               <>
                 <Upload className="w-10 h-10 mx-auto mb-2 text-[hsl(var(--primary)/0.4)]" />
                 <p className="text-sm font-medium text-[hsl(var(--foreground))]">Drop a resume PDF here or click to browse</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">PDF only, max 5MB — Fields will be autofilled instantly</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">PDF only, max 5MB</p>
               </>
             )}
           </div>
 
-          {/* Parse Result Banner */}
-          {parseStatus === 'success' && (
-            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl animate-[fadeIn_0.3s_ease-out]">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-emerald-800">{parseMessage}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {autofillFields.map((field) => (
-                      <span key={field} className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-medium">
-                        ✓ {field}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-emerald-600 mt-1.5">Review and adjust the fields below, then submit.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {parseStatus === 'error' && (
-            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm text-amber-800">{parseMessage}</p>
-                  <button
-                    type="button"
-                    onClick={() => resumeFile && parseAndAutofill(resumeFile)}
-                    className="text-xs text-amber-700 underline mt-1 hover:text-amber-900"
-                  >
-                    Try again
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

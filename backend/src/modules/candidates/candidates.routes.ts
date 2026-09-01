@@ -15,7 +15,6 @@ import {
   getResumeUrl,
   regeneratePublicLink,
   togglePublicLink,
-  parseResume,
 } from './candidates.controller';
 
 const upload = multer({
@@ -35,7 +34,6 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post('/parse-resume', upload.single('file'), parseResume);
 router.get('/', listCandidates);
 router.post('/', createCandidate);
 router.get('/:id', getCandidate);

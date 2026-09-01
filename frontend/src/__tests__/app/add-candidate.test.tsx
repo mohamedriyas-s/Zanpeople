@@ -97,43 +97,7 @@ describe('Add Candidate Page', () => {
     expect(screen.queryByText('React')).not.toBeInTheDocument();
   });
 
-  it('should parse resume and autofill fields', async () => {
-    (api.post as jest.Mock).mockImplementation((url, data) => {
-      if (url === '/candidates/parse-resume') {
-        return Promise.resolve({
-          data: {
-            data: {
-              name: 'Parsed Name',
-              email: 'parsed@example.com',
-              phone: '9876543210',
-              skills: ['ParsedSkill']
-            }
-          }
-        });
-      }
-      return Promise.resolve({ data: { data: { id: 'c1' } } });
-    });
 
-    render(<AddCandidatePage />);
-    
-    const file = new File(['dummy content'], 'resume.pdf', { type: 'application/pdf' });
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-    
-    await act(async () => {
-      fireEvent.change(input, { target: { files: [file] } });
-    });
-    
-    expect(api.post).toHaveBeenCalledWith('/candidates/parse-resume', expect.any(FormData), expect.any(Object));
-    
-    await waitFor(() => {
-      expect(screen.getByText(/Autofilled \d+ fields/)).toBeInTheDocument();
-    });
-    
-    // Check if input values changed
-    const nameInput = screen.getByPlaceholderText('John Doe') as HTMLInputElement;
-    expect(nameInput.value).toBe('Parsed Name');
-    expect(screen.getByText('ParsedSkill')).toBeInTheDocument();
-  });
 
   it('should submit form successfully', async () => {
     render(<AddCandidatePage />);

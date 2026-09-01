@@ -738,26 +738,3 @@ export async function togglePublicLink(req: AuthenticatedRequest, res: Response,
     next(error);
   }
 }
-
-// ─── Parse Resume (FR-CAND-01: Autofill from Resume) ─────────
-
-export async function parseResume(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-  try {
-    if (!req.file) {
-      throw new AppError(400, 'NO_FILE', 'Please upload a PDF file');
-    }
-
-    const { mimetype, buffer } = req.file;
-
-    if (mimetype !== 'application/pdf') {
-      throw new AppError(400, 'INVALID_FILE_TYPE', 'Only PDF files are supported for resume parsing');
-    }
-
-    const { parseResumeBuffer } = await import('../../utils/resumeParser');
-    const parsed = await parseResumeBuffer(buffer);
-
-    sendSuccess(res, parsed);
-  } catch (error) {
-    next(error);
-  }
-}
