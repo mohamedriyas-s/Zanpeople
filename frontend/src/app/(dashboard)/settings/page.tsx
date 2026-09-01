@@ -133,12 +133,12 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
 
   useEffect(() => { fetchItems(); }, [type]);
 
-  const fetchItems = () => {
-    setLoading(true);
+  const fetchItems = (showLoading = true) => {
+    if (showLoading) setLoading(true);
     api.get(`/settings/${type}?activeOnly=false`)
        .then(res => setItems(res.data.data))
        .catch(() => {})
-       .finally(() => setLoading(false));
+       .finally(() => { if (showLoading) setLoading(false); });
   };
 
   const addItem = async () => {
@@ -147,7 +147,7 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
     try {
       await api.post(`/settings/${type}`, { name: newName.trim() });
       setNewName('');
-      fetchItems();
+      fetchItems(false);
     } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
     setAdding(false);
   };
@@ -156,15 +156,19 @@ function CrudListTab({ type, label }: { type: 'departments' | 'designations'; la
     try {
       await api.put(`/settings/${type}/${id}`, { name: editName });
       setEditingId(null);
-      fetchItems();
+      fetchItems(false);
     } catch (err: any) { toast.error(err.response?.data?.error?.message || 'Failed'); }
   };
 
   const toggleItem = async (id: string) => {
+    // Optimistic UI update for instant feedback
+    setItems(items.map(item => item.id === id ? { ...item, isActive: !item.isActive } : item));
     try {
       await api.delete(`/settings/${type}/${id}`);
-      fetchItems();
+      fetchItems(false);
     } catch (err: any) {
+      // Revert if failed
+      setItems(items.map(item => item.id === id ? { ...item, isActive: !item.isActive } : item));
       toast.error(err.response?.data?.error?.message || 'Failed to toggle item');
     }
   };
