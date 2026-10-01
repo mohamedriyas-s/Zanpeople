@@ -79,8 +79,22 @@ export async function listCandidates(req: Request, res: Response, next: NextFunc
     }
     if (req.query.experienceMin || req.query.experienceMax) {
       where.yearsExperience = {};
-      if (req.query.experienceMin) where.yearsExperience.gte = parseFloat(req.query.experienceMin as string);
-      if (req.query.experienceMax) where.yearsExperience.lte = parseFloat(req.query.experienceMax as string);
+      if (req.query.experienceMin) {
+        const min = parseFloat(req.query.experienceMin as string);
+        if (isNaN(min)) {
+          res.status(400).json({ error: 'Invalid experienceMin parameter' });
+          return;
+        }
+        where.yearsExperience.gte = min;
+      }
+      if (req.query.experienceMax) {
+        const max = parseFloat(req.query.experienceMax as string);
+        if (isNaN(max)) {
+          res.status(400).json({ error: 'Invalid experienceMax parameter' });
+          return;
+        }
+        where.yearsExperience.lte = max;
+      }
     }
     if (req.query.dateFrom || req.query.dateTo) {
       where.createdAt = {};
