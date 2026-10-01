@@ -43,6 +43,9 @@ function CandidatesContent() {
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'));
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [position, setPosition] = useState(searchParams.get('position') || '');
+  const [experienceMin, setExperienceMin] = useState(searchParams.get('experienceMin') || '');
+  const [experienceMax, setExperienceMax] = useState(searchParams.get('experienceMax') || '');
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'createdAt');
   const [sortOrder, setSortOrder] = useState(searchParams.get('sortOrder') || 'desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -55,6 +58,9 @@ function CandidatesContent() {
       params.set('limit', '20');
       if (search) params.set('search', search);
       if (status) params.set('status', status);
+      if (position) params.set('position', position);
+      if (experienceMin) params.set('experienceMin', experienceMin);
+      if (experienceMax) params.set('experienceMax', experienceMax);
       params.set('sortBy', sortBy);
       params.set('sortOrder', sortOrder);
 
@@ -68,6 +74,9 @@ function CandidatesContent() {
       if (page > 1) urlParams.set('page', page.toString());
       if (search) urlParams.set('search', search);
       if (status) urlParams.set('status', status);
+      if (position) urlParams.set('position', position);
+      if (experienceMin) urlParams.set('experienceMin', experienceMin);
+      if (experienceMax) urlParams.set('experienceMax', experienceMax);
       if (sortBy !== 'createdAt') urlParams.set('sortBy', sortBy);
       if (sortOrder !== 'desc') urlParams.set('sortOrder', sortOrder);
       const qs = urlParams.toString();
@@ -78,19 +87,22 @@ function CandidatesContent() {
       console.error('Failed to fetch candidates:', err);
     }
     setLoading(false);
-  }, [page, search, status, sortBy, sortOrder, router]);
+  }, [page, search, status, position, experienceMin, experienceMax, sortBy, sortOrder, router]);
 
   useEffect(() => { fetchCandidates(); }, [fetchCandidates]);
 
   const clearFilters = () => {
     setSearch('');
     setStatus('');
+    setPosition('');
+    setExperienceMin('');
+    setExperienceMax('');
     setSortBy('createdAt');
     setSortOrder('desc');
     setPage(1);
   };
 
-  const hasActiveFilters = search || status;
+  const hasActiveFilters = search || status || position || experienceMin || experienceMax;
 
   const toggleSort = (field: string) => {
     if (sortBy === field) {
@@ -143,6 +155,13 @@ function CandidatesContent() {
                 <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
               ))}
             </select>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm font-medium transition-smooth ${showFilters ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]' : 'bg-[hsl(var(--background))] border-[hsl(var(--input))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))]'}`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">Advanced</span>
+            </button>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
@@ -155,8 +174,46 @@ function CandidatesContent() {
           </div>
         </div>
 
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-[hsl(var(--border)/0.5)]">
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Position</label>
+              <input
+                type="text"
+                placeholder="e.g. Frontend Developer"
+                value={position}
+                onChange={(e) => { setPosition(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-smooth"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Min Experience (Yrs)</label>
+              <input
+                type="number"
+                placeholder="Min"
+                min="0"
+                value={experienceMin}
+                onChange={(e) => { setExperienceMin(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-smooth"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5">Max Experience (Yrs)</label>
+              <input
+                type="number"
+                placeholder="Max"
+                min="0"
+                value={experienceMax}
+                onChange={(e) => { setExperienceMax(e.target.value); setPage(1); }}
+                className="w-full px-3 py-2 bg-[hsl(var(--background))] border border-[hsl(var(--input))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] transition-smooth"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Active filter chips */}
-        {hasActiveFilters && (
+        {hasActiveFilters && !showFilters && (
           <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[hsl(var(--border)/0.5)]">
             {status && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-xs font-medium rounded-full">
@@ -168,6 +225,18 @@ function CandidatesContent() {
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-xs font-medium rounded-full">
                 Search: &quot;{search}&quot;
                 <button onClick={() => setSearch('')} className="hover:text-[hsl(var(--primary)/0.7)]"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {position && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-xs font-medium rounded-full">
+                Position: &quot;{position}&quot;
+                <button onClick={() => setPosition('')} className="hover:text-[hsl(var(--primary)/0.7)]"><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {(experienceMin || experienceMax) && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-xs font-medium rounded-full">
+                Exp: {experienceMin || '0'} - {experienceMax || 'Any'} yrs
+                <button onClick={() => { setExperienceMin(''); setExperienceMax(''); }} className="hover:text-[hsl(var(--primary)/0.7)]"><X className="w-3 h-3" /></button>
               </span>
             )}
           </div>
