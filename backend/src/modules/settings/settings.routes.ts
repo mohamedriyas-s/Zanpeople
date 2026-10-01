@@ -20,17 +20,17 @@ const router = Router();
 router.use(authenticate);
 
 // Company Profile (Admin only)
-router.get('/company-profile', getCompanyProfile);
+router.get('/company-profile', requireRole('ADMIN'), getCompanyProfile);
 router.put('/company-profile', requireRole('ADMIN'), updateCompanyProfile);
 
-// Departments (Admin only for write; HR can read for dropdowns)
-router.get('/departments', listDepartments);
+// Departments
+router.get('/departments', requireRole('ADMIN'), listDepartments);
 router.post('/departments', requireRole('ADMIN'), createDepartment);
 router.put('/departments/:id', requireRole('ADMIN'), updateDepartment);
 router.delete('/departments/:id', requireRole('ADMIN'), toggleDepartment);
 
-// Designations (same pattern)
-router.get('/designations', listDesignations);
+// Designations
+router.get('/designations', requireRole('ADMIN'), listDesignations);
 router.post('/designations', requireRole('ADMIN'), createDesignation);
 router.put('/designations/:id', requireRole('ADMIN'), updateDesignation);
 router.delete('/designations/:id', requireRole('ADMIN'), toggleDesignation);
