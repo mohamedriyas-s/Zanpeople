@@ -16,6 +16,8 @@ import { pipelineRoutes } from './modules/pipelines/pipelines.routes';
 import { jobsRoutes } from './modules/jobs/jobs.routes';
 import { applicationRoutes } from './modules/applications/applications.routes';
 
+import { apiLimiter, strictLimiter } from './middleware/rateLimiter';
+
 const app = express();
 
 // ─── Global Middleware ───────────────────────────────
@@ -27,16 +29,19 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Apply general rate limiting to all /api/v1 routes
+app.use('/api/v1', apiLimiter);
+
 // ─── Health Check ────────────────────────────────────
 app.get('/api/v1/health', (_req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
 });
 
 // ─── API Routes ──────────────────────────────────────
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', strictLimiter, authRoutes); // Strict limit for login/auth
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/candidates', candidateRoutes);
-app.use('/api/v1/public/candidate', publicCandidateRoutes);
+app.use('/api/v1/public/candidate', strictLimiter, publicCandidateRoutes); // Strict limit for public candidate links
 app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
